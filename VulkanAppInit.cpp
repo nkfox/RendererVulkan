@@ -146,11 +146,11 @@ void VulkanApp::createInstance() {
 	createInfo.pApplicationInfo = &appInfo;
 
 	std::vector<const char*> requiredExtensions = getRequiredExtensions();
-	createInfo.enabledExtensionCount = requiredExtensions.size();
+	createInfo.enabledExtensionCount = (uint32_t)requiredExtensions.size();
 	createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
 	std::vector<const char*> desiredLayers = getDesiredLayers();
-	createInfo.enabledLayerCount = desiredLayers.size();
+	createInfo.enabledLayerCount = (uint32_t)desiredLayers.size();
 	createInfo.ppEnabledLayerNames = desiredLayers.data();
 
 	VULKAN_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &instance), "Failed to create instance!");
@@ -173,7 +173,7 @@ QueueFamilyIndices VulkanApp::findQueueFamilies(VkPhysicalDevice physicalDevice)
 			indices.graphicsFamily = queueFamilyIndex;
 		}
 		
-		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, surface, &supportPresentation);
+		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, queueFamilyIndex, swapchain.surface, &supportPresentation);
 		if (supportPresentation) {
 			indices.presentationFamily = queueFamilyIndex;
 		}
@@ -213,21 +213,6 @@ bool VulkanApp::isDeviceSuitable(VkPhysicalDevice physicalDevice) {
 	return indices.isComplete() && extensionsSupported && supportedFeatures.samplerAnisotropy;
 }
 
-VkSampleCountFlagBits VulkanApp::getMaxUsableSampleCount() {
-	VkPhysicalDeviceProperties physicalDeviceProperties;
-	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-	VkSampleCountFlags counts = std::min(physicalDeviceProperties.limits.framebufferColorSampleCounts, physicalDeviceProperties.limits.framebufferDepthSampleCounts);
-	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
-	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
-	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
-	if (counts & VK_SAMPLE_COUNT_8_BIT) { return VK_SAMPLE_COUNT_8_BIT; }
-	if (counts & VK_SAMPLE_COUNT_4_BIT) { return VK_SAMPLE_COUNT_4_BIT; }
-	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
-
-	return VK_SAMPLE_COUNT_1_BIT;
-}
-
 void VulkanApp::getPhysicalDevice() {
 	uint32_t deviceCount = 0;
 	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -237,7 +222,6 @@ void VulkanApp::getPhysicalDevice() {
 	for (VkPhysicalDevice availablePhysicalDevice : physicalDevices) {
 		if (isDeviceSuitable(availablePhysicalDevice)) {
 			physicalDevice = availablePhysicalDevice;
-			msaaSamples = getMaxUsableSampleCount();
 			return;
 		}
 
@@ -245,15 +229,15 @@ void VulkanApp::getPhysicalDevice() {
 }
 
 void VulkanApp::getLogicalDevice() {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-	std::set<uint32_t> queueIndices = { indices.graphicsFamily.value(), indices.presentationFamily.value() };
+	queueFamilyIndices = findQueueFamilies(physicalDevice);
+	std::set<uint32_t> queueIndices = { queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentationFamily.value() };
 
 	std::vector<VkDeviceQueueCreateInfo> queueInfos;
 	float queuePriority = 1.0f;
 	for (uint32_t queueIndex : queueIndices) {
 		VkDeviceQueueCreateInfo queueInfo = {};
 		queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueInfo.queueFamilyIndex = indices.graphicsFamily.value();
+		queueInfo.queueFamilyIndex = queueIndex; //queueFamilyIndices.graphicsFamily.value();
 		queueInfo.queueCount = 1;
 		queueInfo.pQueuePriorities = &queuePriority;
 		queueInfos.push_back(queueInfo);
@@ -267,16 +251,16 @@ void VulkanApp::getLogicalDevice() {
 	VkDeviceCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 
-	info.queueCreateInfoCount = queueInfos.size();
+	info.queueCreateInfoCount = (uint32_t)queueInfos.size();
 	info.pQueueCreateInfos = queueInfos.data();
 
-	info.enabledExtensionCount = deviceExtensions.size();
+	info.enabledExtensionCount = (uint32_t)deviceExtensions.size();
 	info.ppEnabledExtensionNames = deviceExtensions.data();
 
 	info.pEnabledFeatures = &features;
 
 	VULKAN_CHECK_RESULT(vkCreateDevice(physicalDevice, &info, nullptr, &device), "Failed to create logical device!");
 
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, indices.presentationFamily.value(), 0, &presentationQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.presentationFamily.value(), 0, &presentationQueue);
 }

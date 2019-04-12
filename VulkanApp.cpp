@@ -1,4 +1,5 @@
 #include "VulkanApp.h"
+#include "VKCommandBuffer.h"
 
 VulkanApp::VulkanApp() {
 }
@@ -25,9 +26,13 @@ void VulkanApp::mainLoop() {
 void VulkanApp::initVulkan() {
 	createInstance();
 	setupDebugMessenger();
-	createSurface();
+	swapchain.createSurface(instance, window);
 	getPhysicalDevice();
 	getLogicalDevice();
+
+	VKImage::initDevices(device, physicalDevice);
+	VKBuffer::initDevices(device, physicalDevice);
+	VKSwapchain::init(device, physicalDevice, queueFamilyIndices);
 
 	initVulkanForSwapchain();
 
@@ -35,28 +40,22 @@ void VulkanApp::initVulkan() {
 }
 
 void VulkanApp::initVulkanForSwapchain() {
-	createSwapChain();
-	createImageViews();
+	swapchain.createSwapChain();
+	swapchain.createImageViews();
 
 	createDescriptorSetLayout();
 	createPipelineLayout();
 	createRenderPass();
 	createGraphicsPipeline();
 
-	createCommandPool();
+	VKCommandBuffer::createCommandPool(device, graphicsQueue, queueFamilyIndices.graphicsFamily.value());
 	createColorResources();
 	createDepthResources();
-	createFramebuffers();
+	swapchain.createFramebuffers(renderPass, colorImage, depthImage);
 	
-	createTextureImage(TEXTURE_PATH.c_str(), &textureImage, &textureImageMemory);
-	createTextureImage(NORMAL_TEXTURE_PATH.c_str(), &normalImage, &normalImageMemory);
-	createTextureImage(SPECULAR_TEXTURE_PATH.c_str(), &specularImage, &specularImageMemory);
-	createTextureImageView(&textureImageView, &textureImage);
-	createTextureImageView(&normalImageView, &normalImage);
-	createTextureImageView(&specularImageView, &specularImage);
-	createTextureSampler(&textureSampler);
-	createTextureSampler(&normalSampler);
-	createTextureSampler(&specularSampler);
+	createTextureImage(TEXTURE_PATH.c_str(), &textureImage);
+	createTextureImage(NORMAL_TEXTURE_PATH.c_str(), &normalImage);
+	createTextureImage(SPECULAR_TEXTURE_PATH.c_str(), &specularImage);
 
 	loadModel();
 	createVertexBuffer();
@@ -66,44 +65,57 @@ void VulkanApp::initVulkanForSwapchain() {
 	createDescriptorPool();
 	createDescriptorSets();
 
-	createCommandBuffers();
+	VKCommandBuffer::createCommandBuffers(swapchain.framebuffers, renderPass, pipeline, pipelineLayout, descriptorSets, swapchain.extent, vertexBuffer.buffer, indexBuffer.buffer, indices);
 }
 
-void VulkanApp::cleanup() {
-	vkDestroyImageView(device, colorImageView, nullptr);
-	vkDestroyImage(device, colorImage, nullptr);
-	vkFreeMemory(device, colorImageMemory, nullptr);
+void VulkanApp::recreateSwapChain() {
+	int width = 0, height = 0;
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(window, &width, &height);
+		glfwWaitEvents();
+	}
 
-	vkDestroyImageView(device, depthImageView, nullptr);
-	vkDestroyImage(device, depthImage, nullptr);
-	vkFreeMemory(device, depthImageMemory, nullptr);
+	vkDeviceWaitIdle(device);
 
 	cleanupSwapChain();
 
-	vkDestroySampler(device, textureSampler, nullptr);
-	vkDestroySampler(device, normalSampler, nullptr);
-	vkDestroySampler(device, specularSampler, nullptr);
+	initVulkanForSwapchain();
+}
 
-	vkDestroyImageView(device, textureImageView, nullptr);
-	vkDestroyImageView(device, normalImageView, nullptr);
-	vkDestroyImageView(device, specularImageView, nullptr);
+void VulkanApp::cleanupSwapChain() {
+	/*for (size_t i = 0; i < framebuffers.size(); i++) {
+		vkDestroyFramebuffer(device, framebuffers[i], nullptr);
+	}*/
 
-	vkDestroyImage(device, textureImage, nullptr);
-	vkFreeMemory(device, textureImageMemory, nullptr);
+	VKCommandBuffer::freeCommandBuffers();
 
-	vkDestroyImage(device, normalImage, nullptr);
-	vkFreeMemory(device, normalImageMemory, nullptr);
+	vkDestroyPipeline(device, pipeline, nullptr);
+	vkDestroyRenderPass(device, renderPass, nullptr);
+	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
+	vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
-	vkDestroyImage(device, specularImage, nullptr);
-	vkFreeMemory(device, specularImageMemory, nullptr);
+	/*for (size_t i = 0; i < imageViews.size(); i++) {
+		vkDestroyImageView(device, imageViews[i], nullptr);
+	}
 
-	vkDestroyBuffer(device, indexBuffer, nullptr);
-	vkFreeMemory(device, indexBufferMemory, nullptr);
-	vkDestroyBuffer(device, vertexBuffer, nullptr);
-	vkFreeMemory(device, vertexBufferMemory, nullptr);
-	for (size_t i = 0; i < swapChainImages.size(); i++) {
-		vkDestroyBuffer(device, uniformBuffers[i], nullptr);
-		vkFreeMemory(device, uniformBuffersMemory[i], nullptr);
+	vkDestroySwapchainKHR(device, swapchain, nullptr);*/
+	swapchain.free();
+}
+
+void VulkanApp::cleanup() {
+	colorImage.clear();
+	depthImage.clear();
+
+	cleanupSwapChain();
+
+	textureImage.clear();
+	normalImage.clear();
+	specularImage.clear();
+
+	indexBuffer.clear();
+	vertexBuffer.clear();
+	for (size_t i = 0; i < swapchain.images.size(); i++) {
+		uniformBuffers[i].clear();
 	}
 	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
@@ -112,13 +124,13 @@ void VulkanApp::cleanup() {
 		vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(device, inFlightFences[i], nullptr);
 	}
-	vkDestroyCommandPool(device, commandPool, nullptr);
+	VKCommandBuffer::destroyCommandPool();
 
 	if (enableValidationLayers) {
 		DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
 	}
 	vkDestroyDevice(device, nullptr);
-	vkDestroySurfaceKHR(instance, surface, nullptr);
+	vkDestroySurfaceKHR(instance, swapchain.surface, nullptr);
 	vkDestroyInstance(instance, nullptr);
 	
 	glfwDestroyWindow(window);

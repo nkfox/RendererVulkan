@@ -85,8 +85,8 @@ void VulkanApp::createPipelineLayout() {
 
 void VulkanApp::createRenderPass() {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = swapChainImageFormat;
-	colorAttachment.samples = msaaSamples;
+	colorAttachment.format = swapchain.imageFormat;
+	colorAttachment.samples = VKImage::msaaSamples;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -100,7 +100,7 @@ void VulkanApp::createRenderPass() {
 
 	VkAttachmentDescription depthAttachment = {};
 	depthAttachment.format = findDepthFormat();
-	depthAttachment.samples = msaaSamples;
+	depthAttachment.samples = VKImage::msaaSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -113,7 +113,7 @@ void VulkanApp::createRenderPass() {
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription colorAttachmentResolve = {};
-	colorAttachmentResolve.format = swapChainImageFormat;
+	colorAttachmentResolve.format = swapchain.imageFormat;
 	colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -181,7 +181,7 @@ void VulkanApp::createGraphicsPipeline() {
 	VkPipelineVertexInputStateCreateInfo vertexInputState = {};
 	vertexInputState.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputState.vertexBindingDescriptionCount = 1;
-	vertexInputState.vertexAttributeDescriptionCount = attributeDescriptions.size();
+	vertexInputState.vertexAttributeDescriptionCount = (uint32_t)attributeDescriptions.size();
 	vertexInputState.pVertexBindingDescriptions = &bindingDescription;
 	vertexInputState.pVertexAttributeDescriptions = attributeDescriptions.data();
 
@@ -193,13 +193,13 @@ void VulkanApp::createGraphicsPipeline() {
 	VkViewport viewport = {};
 	viewport.x = 0.f;
 	viewport.y = 0.f;
-	viewport.width = (float)swapChainExtent.width;
-	viewport.height = (float)swapChainExtent.height;
+	viewport.width = (float)swapchain.extent.width;
+	viewport.height = (float)swapchain.extent.height;
 	viewport.minDepth = 0.f;
 	viewport.maxDepth = 1.f;
 
 	VkRect2D scissor = {};
-	scissor.extent = swapChainExtent;
+	scissor.extent = swapchain.extent;
 	scissor.offset = { 0, 0 };
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
@@ -222,7 +222,7 @@ void VulkanApp::createGraphicsPipeline() {
 	VkPipelineMultisampleStateCreateInfo multisampling = {};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = msaaSamples;
+	multisampling.rasterizationSamples = VKImage::msaaSamples;
 	multisampling.sampleShadingEnable = VK_TRUE;
 	multisampling.minSampleShading = .2f;
 
