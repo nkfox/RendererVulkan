@@ -171,21 +171,21 @@ private:
 	//----------------------------------------------------------
 
 private:
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkPhysicalDevice physicalDevice;
-	VkDevice device;
-	VkQueue graphicsQueue;
-	VkQueue presentationQueue;
-	QueueFamilyIndices queueFamilyIndices;
+	VkInstance instance = nullptr;
+	VkDebugUtilsMessengerEXT debugMessenger = nullptr;
+	VkPhysicalDevice physicalDevice = nullptr;
+	VkDevice device = nullptr;
+	VkQueue graphicsQueue = nullptr;
+	VkQueue presentationQueue = nullptr;
+	QueueFamilyIndices queueFamilyIndices{};
 
-	GLFWwindow* window;
+	GLFWwindow* window = nullptr;
 	VKSwapchain swapchain;
 
-	VkDescriptorSetLayout descriptorSetLayout;
-	VkPipelineLayout pipelineLayout;
-	VkRenderPass renderPass;
-	VkPipeline pipeline;
+	VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
+	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
+	VkRenderPass renderPass = VK_NULL_HANDLE;
+	VkPipeline pipeline = VK_NULL_HANDLE;
 
 	VKImage textureImage;
 	VKImage normalImage;

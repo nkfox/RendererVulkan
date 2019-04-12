@@ -97,7 +97,7 @@ void VKSwapchain::createSurface(VkInstance instance, GLFWwindow* windowIn) {
 	VULKAN_CHECK_RESULT(vkCreateWin32SurfaceKHR(instance, &info, nullptr, &surface), "Failed to create window surface!");
 }
 
-void VKSwapchain::createFramebuffers(VkRenderPass renderPass, VKImage colorImage, VKImage depthImage) {
+void VKSwapchain::createFramebuffers(VkRenderPass renderPass, const VKImage &colorImage, const VKImage &depthImage) {
 	framebuffers.resize(images.size());
 	for (size_t i = 0; i < imageViews.size(); i++) {
 		std::array<VkImageView, 3> attachments = {

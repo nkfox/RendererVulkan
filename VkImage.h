@@ -5,6 +5,9 @@ class VKImage
 public:
 	static void initDevices(VkDevice device, VkPhysicalDevice physicalDevice);
 
+	VKImage(const VKImage &) = delete;
+
+	VKImage() = default;
 	~VKImage();
 
 	void clear();
@@ -18,11 +21,11 @@ public:
 	static VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 	void createSampler();
 
-	VkImage image;
-	VkDeviceMemory imageMemory;
+	VkImage image = VK_NULL_HANDLE;
+	VkDeviceMemory imageMemory = VK_NULL_HANDLE;
 
-	VkImageView imageView;
-	VkSampler sampler;
+	VkImageView imageView = VK_NULL_HANDLE;
+	VkSampler sampler = VK_NULL_HANDLE;
 
 	uint32_t mipLevels;
 	static VkSampleCountFlagBits msaaSamples;

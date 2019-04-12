@@ -17,7 +17,11 @@
 #endif
 
 #define CHECK_RESULT(result, message) if (!result) throw std::runtime_error(message)
-#define VULKAN_CHECK_RESULT(result, message) if (result != VK_SUCCESS) throw std::runtime_error(message)
+inline void VULKAN_CHECK_RESULT(VkResult result, const char *message)
+{
+	if (result != VK_SUCCESS)
+		throw std::runtime_error(message);
+}
 
 const int WIDTH = 800;
 const int HEIGHT = 600;

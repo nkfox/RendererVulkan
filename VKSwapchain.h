@@ -12,20 +12,20 @@ public:
 	void free();
 
 	void createSurface(VkInstance instance, GLFWwindow* window);
-	void createFramebuffers(VkRenderPass renderPass, VKImage colorImage, VKImage depthImage);
+	void createFramebuffers(VkRenderPass renderPass, const VKImage &colorImage, const VKImage &depthImage);
 
 	VkSurfaceFormatKHR chooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 	VkExtent2D chooseExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	VkPresentModeKHR choosePresentMode(const std::vector<VkPresentModeKHR> availablePresentModes);
 	void createImageViews();
 
-	VkSwapchainKHR swapchain;
+	VkSwapchainKHR swapchain = VK_NULL_HANDLE;
 
-	GLFWwindow* window;
-	VkSurfaceKHR surface;
+	GLFWwindow* window = nullptr;
+	VkSurfaceKHR surface = VK_NULL_HANDLE;
 	
-	VkFormat imageFormat;
-	VkExtent2D extent;
+	VkFormat imageFormat = {};
+	VkExtent2D extent = {};
 
 	std::vector<VkImage> images;
 	std::vector<VkImageView> imageViews;

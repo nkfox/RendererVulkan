@@ -2,10 +2,10 @@
 
 #include <array>
 
-VkCommandPool VKCommandBuffer::commandPool;
+VkCommandPool VKCommandBuffer::commandPool = nullptr;
 std::vector<VkCommandBuffer> VKCommandBuffer::commandBuffers;
-VkDevice VKCommandBuffer::device;
-VkQueue VKCommandBuffer::graphicsQueue;
+VkDevice VKCommandBuffer::device = nullptr;
+VkQueue VKCommandBuffer::graphicsQueue = nullptr;
 
 
 void VKCommandBuffer::createCommandPool(VkDevice deviceIn, VkQueue graphicsQueueIn, uint32_t graphicsFamilyIndex) {
@@ -52,9 +52,10 @@ void VKCommandBuffer::createCommandBuffers(std::vector<VkFramebuffer> swapChainF
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = extent;
 
-		std::array<VkClearValue, 2> clearValues = {};
+		std::array<VkClearValue, 3> clearValues = {};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
+		clearValues[2].color = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();

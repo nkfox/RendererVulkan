@@ -16,8 +16,8 @@ public:
 
 	static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-	VkBuffer buffer;
-	VkDeviceMemory bufferMemory;
+	VkBuffer buffer = VK_NULL_HANDLE;
+	VkDeviceMemory bufferMemory = VK_NULL_HANDLE;
 
 private:
 	static VkDevice device;

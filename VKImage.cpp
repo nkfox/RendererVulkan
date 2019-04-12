@@ -21,14 +21,22 @@ VKImage::~VKImage()
 
 void VKImage::clear()
 {
-	if (sampler)
+	if (sampler) {
 		vkDestroySampler(device, sampler, nullptr);
-	if (imageView)
+		sampler = VK_NULL_HANDLE;
+	}
+	if (imageView) {
 		vkDestroyImageView(device, imageView, nullptr);
-	if (image)
+		imageView = VK_NULL_HANDLE;
+	}
+	if (image) {
 		vkDestroyImage(device, image, nullptr);
-	if (imageMemory)
+		image = VK_NULL_HANDLE;
+	}
+	if (imageMemory) {
 		vkFreeMemory(device, imageMemory, nullptr);
+		imageMemory = VK_NULL_HANDLE;
+	}
 }
 
 uint32_t VKImage::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
