@@ -199,7 +199,7 @@ private:
 
 	VKBuffer vertexBuffer;
 	VKBuffer indexBuffer;
-	std::vector<VKBuffer> uniformBuffers;
+	std::vector<VKBuffer> uniformBuffers = {};
 
 	VkDescriptorPool descriptorPool;
 	std::vector<VkDescriptorSet> descriptorSets;

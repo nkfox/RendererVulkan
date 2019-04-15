@@ -5,6 +5,9 @@ class VKBuffer
 public:
 	static void initDevices(VkDevice device, VkPhysicalDevice physicalDevice);
 
+	//VKBuffer(const VKBuffer&) = delete;
+
+	VKBuffer() = default;
 	~VKBuffer();
 
 	void clear();
